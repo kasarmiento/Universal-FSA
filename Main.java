@@ -36,7 +36,7 @@ public class Main {
 				temptrans = new ArrayList<String>();
 				temp = in.readLine();
 				while(temp.charAt(0) == '(') {
-					temptrans.add(temp.substring(1,6));
+					temptrans.add(temp.substring(1,temp.length()-1));
 					temp = in.readLine();
 				}	// when this loop exits, temp contains 1st string to test.
 				machine.setTrans(temptrans);
