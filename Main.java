@@ -5,12 +5,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
+/**
+ * @author Khamille S. 2014
+ *
+ */
 public class Main {
 
 	public static void main(String[] args) throws IOException {
-		Main ufsa = new Main();
 		ArrayList<String> temptrans;
-		
 		BufferedReader in = new BufferedReader(new FileReader("input.txt"));
 		int counter = 1;
 		while(in.ready()) {
@@ -47,7 +49,6 @@ public class Main {
 				// Read in and test strings
 				System.out.println("(5) strings: ");
 				while(temp.substring(0,1).compareTo(".") != 0) { // while we have not reached 0s 
-					System.out.print("\t" + temp + " ");
 					machine.test(temp);
 					temp = in.readLine();
 				}

@@ -3,20 +3,52 @@ package proj1;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+/**
+ * 
+ * @author Khamille Sarmiento 2014
+ *
+ */
 public class dfsa {
 	
+	/**
+	 * The number of states in this machine
+	 */
 	int numStates;
-	int transitions[][];
-	boolean finalStates[];
-	char[] alphabet;
-	ArrayList testStrings;
 	
+	/**
+	 * A 2d array that represents the transitions in this machine.
+	 * The size of transitions is number_of_states x number_of_chars_in_alphabet.
+	 */
+	int transitions[][];
+	
+	/**
+	 * An array whose indices refer to a particular state in this machine.
+	 * If the element at index i is true, then it is a final state.
+	 * If the element at index i is false, then it is not a final state.
+	 */
+	boolean finalStates[];
+	
+	/**
+	 * An array that contains all valid characters of this machine.
+	 */
+	char[] alphabet;
+	
+	/**
+	 * Constructs a new dfsa machine, initializing all states as NOT final.
+	 * The boolean array called finalStates has a size of total_states + 1 
+	 * where the additional 1 represents a trap state.
+	 * @param states - The total number of states in this machine
+	 */
 	public dfsa(int states) {
 		numStates = states;
 		finalStates = new boolean[numStates+1]; // +1 is a trap state
 		Arrays.fill(finalStates, Boolean.FALSE);
 	}
 	
+	/**
+	 * Sets the final states of this dfsa machine.
+	 * @param line - a string containing the final states of this machine separated by a white space
+	 */
 	public void setFinal(String line) {
 		String[] input = line.split(" ");
 		for(String state : input) {
@@ -24,6 +56,9 @@ public class dfsa {
 		}
 	}
 	
+	/**
+	 * Prints the final states of this dfsa machine.
+	 */
 	public void printFinalStates() {
 		for(int i = 0; i < finalStates.length; ++i) {
 			if (finalStates[i] == true) { System.out.print(i + " "); }
@@ -31,6 +66,10 @@ public class dfsa {
 		System.out.println();
 	}
 	
+	/**
+	 * Defines the alphabet for this dfsa machine.
+	 * @param line - a string containing all valid characters of this machine separated by a white space
+	 */
 	public void setAlpha(String line) {
 		String[] temp = line.split(" ");
 		alphabet = new char[temp.length];
@@ -39,6 +78,9 @@ public class dfsa {
 		}
 	}
 	
+	/**
+	 * A convenient way to print all valid characters of this machine.
+	 */
 	public void printAlpha() {
 		int commas = 0;
 		for(char a : alphabet) {
@@ -49,8 +91,11 @@ public class dfsa {
 		System.out.println();
 	}
 	
-	// Transitions array is an array of integers, where each int
-	// represents an input either numerical or any other symbol, i.e. 10 = a
+	/**
+	 * Sets the transition matrix of this machine, which tells the machine where
+	 * to go next.
+	 * @param trans
+	 */
 	public void setTrans(ArrayList<String> trans) {
 		transitions = new int[numStates+1][alphabet.length]; // +1 represents the trap state
 		initialize2d(transitions);
@@ -58,9 +103,6 @@ public class dfsa {
 		for(int i = 0; i < trans.size(); i++) {
 			
 			temp = trans.get(i).split(" ");
-			for(String s : temp) {
-				System.out.print(s + " ");
-			}
 			
 			int p = Integer.parseInt(temp[0]); // the characters in the transition array can be characters
 			int a = translate(temp[1].charAt(0));
@@ -74,6 +116,11 @@ public class dfsa {
 		//print2d(transitions);
 	}
 	
+	/**
+	 * Initializes a 2d array with the value of its last index. 
+	 * Why? This last index represents a trap state.
+	 * @param x
+	 */
 	private void initialize2d(int[][] x) {
 		for(int i = 0; i < getRows(x); i++) {
 			for(int j = 0; j < getCols(x); j++) {
@@ -82,6 +129,9 @@ public class dfsa {
 		}
 	}
 	
+	/**
+	 * A convenient way to view the transitions of this machine.
+	 */
 	public void printTransitions() {
 		for(int i = 0; i < getRows(transitions); i++) {
 			for(int j = 0; j < getCols(transitions); j++) {
@@ -92,6 +142,11 @@ public class dfsa {
 		}
 	}
 	
+	/**
+	 * Translates a character of this machine's alphabet into a corresponding number
+	 * @param ch - the character to translate
+	 * @return the character's corresponding number according to its location in the alphabet matrix
+	 */
 	private int translate(char ch) {
 		for(int i = 0; i < alphabet.length; i++) {
 			if(alphabet[i] == ch) { return i; }
@@ -99,14 +154,28 @@ public class dfsa {
 		return numStates+1;
 	}
 	
+	/**
+	 * Returns the number of rows in a 2d matrix
+	 * @param r
+	 * @return the number of rows
+	 */
 	private int getRows(int[][] r) {
 		return r.length;
 	}
 	
+	/**
+	 * Returns the number of columns in a 2d matrix
+	 * @param r
+	 * @return the number of columns
+	 */
 	private int getCols(int[][] r) {
 		return r[0].length;
 	}
 	
+	/**
+	 * A convenient way to print out any 2d matrix.
+	 * @param x - a 2d matrix
+	 */
 	private void print2d(int[][] x) {
 		for (int i = 0; i < getRows(x); i++){
 		    for (int j = 0; j < getCols(x); j++){
@@ -116,15 +185,21 @@ public class dfsa {
 		}
 	}
 	
+	/**
+	 * Tests whether a string will be accepted by this dfsa or not. 
+	 * If the string is accepted, then it is in the language.
+	 * If the string is rejected, then it is not in the language. 
+	 * @param str - the string in question
+	 */
 	public void test(String str) {
 		int initialState = 0; 
 		int currentState = initialState;
 		
 		for(int i = 0; i < str.length(); i++) {
 			if(!inAlphabet(str.charAt(i))) { //if it ISN'T in the alphabet
-				if(str.charAt(i) == ' ' && i == 0) { System.out.print("accept"); }
+				if(str.charAt(i) == ' ' && i == 0) { System.out.printf("%-15s %15s %n", "\t"+str, "accept"); }
 				else { 
-					System.out.print("reject"); 
+					System.out.printf("%-15s %15s %n", "\t"+str, "reject"); 
 					break; 
 				}				
 			}
@@ -135,8 +210,8 @@ public class dfsa {
 				currentState = transitions[currentState][translate(str.charAt(i))];
 				//System.out.println(" -- last state: " + currentState);
 				
-				if(finalStates[currentState] == true) { System.out.print("accept"); }
-				else { System.out.print("reject"); }
+				if(finalStates[currentState] == true) { System.out.printf("%-15s %15s %n", "\t"+str, "accept"); }
+				else { System.out.printf("%-15s %15s %n", "\t"+str, "reject"); }
 			}
 			else {
 				//System.out.print("current state: " + currentState);
@@ -146,11 +221,14 @@ public class dfsa {
 			}
 			
 		}
-		
-		System.out.println();
 
 	}
 	
+	/**
+	 * Checks whether a certain character is in this dfsa's alphabet
+	 * @param c - the character in question
+	 * @return true if the character is in the alphabet, false otherwise
+	 */
 	private boolean inAlphabet(char c) {
 		for(int i = 0; i < alphabet.length; i++) {
 			if(c == alphabet[i]) {
