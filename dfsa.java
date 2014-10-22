@@ -4,6 +4,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
+ * A universal finite state automaton is a string-consuming mechanism that allows
+ * for easy finite state automata (fsa) design and modification. It is a general
+ * program that can consume multiple fsa designs and test strings for each fsa
+ * machine. 
+ * 
+ * I have only tested this program using deterministic fsa machines. 
+ * I wrote and compiled this program in Eclipse. The source code is packaged in
+ * 'proj1'. The input file must be in the parent project folder in order for it 
+ * to run. 
  * 
  * @author Khamille Sarmiento 2014
  *
