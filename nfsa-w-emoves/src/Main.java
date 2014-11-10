@@ -51,8 +51,8 @@ public class Main {
 				}	// when this loop exits, temp contains 1st string to test.
 				machine.setTrans(temptrans);
 				temptrans.clear();
-				System.out.println("(4) transitions: ");
-				machine.printTransitions();
+				//System.out.println("(4) transitions: ");
+				//machine.printTransitions();
 				
 				
 				
