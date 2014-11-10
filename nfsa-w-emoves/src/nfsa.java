@@ -1,5 +1,7 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A universal finite state automaton is a string-consuming mechanism that allows
@@ -26,7 +28,12 @@ public class nfsa {
 	 * A 2d array that represents the transitions in this machine.
 	 * The size of transitions is number_of_states x number_of_chars_in_alphabet.
 	 */
-	int transitions[][];
+	Set<Integer> transitions[][];
+	
+	ArrayList<String> baloney = new ArrayList<String>();
+	
+	
+	
 	
 	/**
 	 * An array whose indices refer to a particular state in this machine.
@@ -104,8 +111,8 @@ public class nfsa {
 	 * @param trans
 	 */
 	public void setTrans(ArrayList<String> trans) {
-		transitions = new int[numStates+1][alphabet.length]; // +1 represents the trap state
-		initialize2d(transitions);
+		transitions = new Set[numStates+1][alphabet.length]; // +1 represents the trap state
+		
 		String[] temp;
 		for(int i = 0; i < trans.size(); i++) {
 			
@@ -113,27 +120,18 @@ public class nfsa {
 			
 			int p = Integer.parseInt(temp[0]); // the characters in the transition array can be characters
 			int a = translate(temp[1].charAt(0));
-			int q = Integer.parseInt(temp[2]);
 			
-			transitions[p][a] = q;
-			//System.out.print("p:" + p );
-			//System.out.print(" a:" + a );
-			//System.out.println(" q:" + q );
-		}	
-		//print2d(transitions);
-	}
-	
-	/**
-	 * Initializes a 2d array with the value of its last index. 
-	 * Why? This last index represents a trap state.
-	 * @param x
-	 */
-	private void initialize2d(int[][] x) {
-		for(int i = 0; i < getRows(x); i++) {
-			for(int j = 0; j < getCols(x); j++) {
-				x[i][j] = getRows(x)-1;
+			Set<Integer> tmp = new HashSet<Integer>();
+			for(int j = 2; j < temp.length; j++) {
+				int q = Integer.parseInt(temp[j]);
+				tmp.add(q);
 			}
-		}
+			transitions[p][a] = tmp;
+			
+		}	
+		System.out.println("Transitions:");
+		printTransitions();
+		
 	}
 	
 	/**
@@ -142,9 +140,13 @@ public class nfsa {
 	public void printTransitions() {
 		for(int i = 0; i < getRows(transitions); i++) {
 			for(int j = 0; j < getCols(transitions); j++) {
-				if(transitions[i][j] != getRows(transitions)+1) { // do not print out trap states
-					System.out.println("\t" + i + " " + alphabet[j] + " " + transitions[i][j]);
-				}
+				if(transitions[i][j] != null) { // do not print out trap states
+					System.out.print("\t" + i + " " + alphabet[j] + " ");
+					for (int s : transitions[i][j]) {
+			    	    System.out.print(s + " ");
+			    	}
+					System.out.println();
+				}	
 			}
 		}
 	}
@@ -166,7 +168,7 @@ public class nfsa {
 	 * @param r
 	 * @return the number of rows
 	 */
-	private int getRows(int[][] r) {
+	private int getRows(Set[][] r) {
 		return r.length;
 	}
 	
@@ -175,60 +177,32 @@ public class nfsa {
 	 * @param r
 	 * @return the number of columns
 	 */
-	private int getCols(int[][] r) {
+	private int getCols(Set[][] r) {
 		return r[0].length;
 	}
 	
 	/**
-	 * A convenient way to print out any 2d matrix.
-	 * @param x - a 2d matrix
+	 * A convenient way to print out a 2d matrix of 
+	 * Integer Sets. x[i][j] contains a Set of Integers.
+	 * x[i][j] = {0}, or even x[i][j] = {0,1} for example
+	 * @param x - a 2d matrix of Integer Sets
 	 */
-	private void print2d(int[][] x) {
+	private void print2d(Set<Integer>[][] x) {
+		boolean format = false; // This boolean is simply for white space between transitions. 
 		for (int i = 0; i < getRows(x); i++){
 		    for (int j = 0; j < getCols(x); j++){
-		        System.out.print(x[i][j] + " ");
+		    	format = false;
+		    	if(x[i][j] != null) {
+			    	for (int s : x[i][j]) {
+			    	    System.out.print(s + " ");
+			    	    format = true;
+			    	}
+		    	}
 		    }
-		    System.out.println();
+		    if(format == true) {
+		    	System.out.println();
+		    }
 		}
-	}
-	
-	/**
-	 * Tests whether a string will be accepted by this dfsa or not. 
-	 * If the string is accepted, then it is in the language.
-	 * If the string is rejected, then it is not in the language. 
-	 * @param str - the string in question
-	 */
-	public void test(String str) {
-		int initialState = 0; 
-		int currentState = initialState;
-		
-		for(int i = 0; i < str.length(); i++) {
-			if(!inAlphabet(str.charAt(i))) { //if it ISN'T in the alphabet
-				if(str.charAt(i) == ' ' && i == 0) { System.out.printf("%-15s %15s %n", "\t"+str, "accept"); }
-				else { 
-					System.out.printf("%-15s %15s %n", "\t"+str, "reject"); 
-					break; 
-				}				
-			}
-			else if(i == str.length()-1) { //if it IS the last character of the string
-				
-				//System.out.print("current state: " + currentState);
-				//System.out.print(" -- consume: " + translate(str.charAt(i)));
-				currentState = transitions[currentState][translate(str.charAt(i))];
-				//System.out.println(" -- last state: " + currentState);
-				
-				if(finalStates[currentState] == true) { System.out.printf("%-15s %15s %n", "\t"+str, "accept"); }
-				else { System.out.printf("%-15s %15s %n", "\t"+str, "reject"); }
-			}
-			else {
-				//System.out.print("current state: " + currentState);
-				//System.out.print(" -- consume: " + translate(str.charAt(i)));
-				currentState = transitions[currentState][translate(str.charAt(i))];
-				//System.out.println(" -- new state: " + currentState);
-			}
-			
-		}
-
 	}
 	
 	/**
