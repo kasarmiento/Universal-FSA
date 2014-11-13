@@ -17,38 +17,40 @@ import java.util.Set;
  * @author Khamille Sarmiento 2014
  *
  */
+@SuppressWarnings({ "unchecked", "rawtypes", "unused" })
 public class nfsa {
 	
 	/**
 	 * The number of states in this machine
 	 */
-	int numStates;
+	public int numStates;
 	
 	/**
 	 * A 2d array that represents the transitions in this machine.
 	 * The size of transitions is number_of_states x number_of_chars_in_alphabet.
 	 */
-	Set<Integer> transitions[][];
+	private Set<Integer> transitions[][];
 	
-	ArrayList<String> baloney = new ArrayList<String>();
+	private Set<Integer> eclosure[];
 	
-	
-	
+	private Set<Integer> dfsa[][];
 	
 	/**
 	 * An array whose indices refer to a particular state in this machine.
 	 * If the element at index i is true, then it is a final state.
 	 * If the element at index i is false, then it is not a final state.
 	 */
-	boolean finalStates[];
+	private boolean finalStates[];
 	
 	/**
 	 * An array that contains all valid characters of this machine.
 	 */
-	char[] alphabet;
+	private char[] alphabet;
+	
+	private boolean hasEmoves = false;
 	
 	/**
-	 * Constructs a new dfsa machine, initializing all states as NOT final.
+	 * Constructs a new machine, initializing all states as NOT final.
 	 * The boolean array called finalStates has a size of total_states + 1 
 	 * where the additional 1 represents a trap state.
 	 * @param states - The total number of states in this machine
@@ -71,7 +73,7 @@ public class nfsa {
 	}
 	
 	/**
-	 * Prints the final states of this dfsa machine.
+	 * Prints the final states of this nfsa machine.
 	 */
 	public void printFinalStates() {
 		for(int i = 0; i < finalStates.length; ++i) {
@@ -86,24 +88,97 @@ public class nfsa {
 	 */
 	public void setAlpha(String line) {
 		String[] temp = line.split(" ");
-		alphabet = new char[temp.length];
-		for(int i = 0; i < alphabet.length; i++) {
-			alphabet[i] = temp[i].charAt(0);
+		alphabet = new char[temp.length+1]; // where the last index represents a column for emoves
+		for(int i = 0; i < alphabet.length-1; i++) { // for actual alphabet characters
+			alphabet[i] = temp[i].charAt(0); // copy actual alphabet values into alphabet array
 		}
+		alphabet[alphabet.length-1] = 'e'; // make the last index a *, where * represents a possible emove
 	}
 	
 	/**
 	 * A convenient way to print all valid characters of this machine.
 	 */
 	public void printAlpha() {
-		int commas = 0;
-		for(char a : alphabet) {
-			System.out.print(a);
-			if(commas < alphabet.length-1) { System.out.print(", "); }
-			commas++;
+		for(int i = 0; i < alphabet.length-1; i++) {
+			System.out.print(alphabet[i] + " ");
 		}
 		System.out.println();
 	}
+	
+	/**
+	 * A convenient way to print the elements within a Set.
+	 */
+	private void printSet(Set<Integer> s) {
+		if(s != null) {
+			for(int i : s) { System.out.print(i + " "); }
+		}
+	}
+	
+	
+	private void getEclosure() {
+		eclosure = new HashSet[numStates];
+		Set<Integer> tmp = new HashSet();
+		int lastElement = transitions.length-1;
+		int counter = 0;
+		for(int i = 0; i < getRows(transitions); i++) {
+			tmp.add(i);
+			printSet(transitions[i][lastElement]);
+			tmp.addAll(transitions[i][lastElement]);
+			int setSize;
+			do {
+				setSize = tmp.size();
+				Set<Integer> tmp2 = new HashSet();
+				for(int s : tmp) {
+					tmp2.addAll(transitions[s][lastElement]);
+				}
+				tmp.addAll(tmp2);
+			} while(tmp.size() > setSize);
+			System.out.print("eclosure " + i + ": ");
+			eclosure[i] = tmp;
+		}
+	}	
+	
+	public void getNfsaNoEmove() {
+		if(hasEmoves == true) {
+			getEclosure();
+		}
+	}
+	
+	
+	/*
+	public void getDFSA() {
+		ArrayList<Set[]> dfsaTransitionsList = new ArrayList<Set[]>();
+		ArrayList<Set> dfsaStatesList = new ArrayList<Set>();
+		
+		Set<Integer> tmpSet = new HashSet<Integer>();
+		Set<Integer>[] tmpArray = new HashSet[alphabet.length];
+		
+		for(int i = 0; i < getRows(transitions); i++) {
+			tmpSet.add(i);
+			if( !dfsaStatesList.contains(tmpSet) ) {
+				dfsaStatesList.add(tmpSet);
+			}
+			tmpSet.clear();		
+			for(int j = 0; j < getCols(transitions); j++) {
+				tmpArray[j] = transitions[i][j];
+				printSet(transitions[i][j]);
+				if(!dfsaTransitionsList.contains(tmpArray[j])) {
+					dfsaStatesList.add(tmpArray[j]);
+				}
+			}
+			dfsaTransitionsList.add(tmpArray);
+			System.out.println();
+		}
+		
+		System.out.println("Printing dfsa: ");
+		for(Set[] sA : dfsa) {
+			for(Set i : sA) {
+				printSet(i);
+			}
+		}
+		
+	}
+	*/
 	
 	/**
 	 * Sets the transition matrix of this machine, which tells the machine where
@@ -112,26 +187,21 @@ public class nfsa {
 	 */
 	public void setTrans(ArrayList<String> trans) {
 		transitions = new Set[numStates+1][alphabet.length]; // +1 represents the trap state
-		
+		hasEmoves = false;
 		String[] temp;
 		for(int i = 0; i < trans.size(); i++) {
-			
 			temp = trans.get(i).split(" ");
-			
 			int p = Integer.parseInt(temp[0]); // the characters in the transition array can be characters
-			int a = translate(temp[1].charAt(0));
 			
+			int a = translate(temp[1].charAt(0));
+			if(a == alphabet.length-1) { hasEmoves = true; }
 			Set<Integer> tmp = new HashSet<Integer>();
 			for(int j = 2; j < temp.length; j++) {
 				int q = Integer.parseInt(temp[j]);
 				tmp.add(q);
 			}
 			transitions[p][a] = tmp;
-			
-		}	
-		System.out.println("Transitions:");
-		printTransitions();
-		
+		}
 	}
 	
 	/**

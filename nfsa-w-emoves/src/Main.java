@@ -28,7 +28,7 @@ public class Main {
 			String temp = in.readLine();
 			if(temp.compareTo(".") != 0) {
 			
-				// dfsa constructor
+				// nfsa constructor
 				nfsa machine = new nfsa(Integer.parseInt(temp));
 				System.out.println("Finite State Automaton #" + counter + ". \n(1) number of states: " + machine.numStates);
 				
@@ -51,9 +51,10 @@ public class Main {
 				}	// when this loop exits, temp contains 1st string to test.
 				machine.setTrans(temptrans);
 				temptrans.clear();
-				//System.out.println("(4) transitions: ");
-				//machine.printTransitions();
-				
+				System.out.println("(4) transitions: ");
+				machine.printTransitions();
+
+				machine.getNfsaNoEmove();
 				
 				
 			}
