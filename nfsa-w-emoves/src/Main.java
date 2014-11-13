@@ -53,8 +53,12 @@ public class Main {
 				temptrans.clear();
 				System.out.println("(4) transitions: ");
 				machine.printTransitions();
-
-				machine.getNfsaNoEmove();
+				System.out.println();
+				
+				System.out.print("The equivalent DFSA by subset construction:\n1) number of states: ");
+				machine.getDfsaNumStates();
+				machine.printDfsa();
+				System.out.println();
 				
 				
 			}

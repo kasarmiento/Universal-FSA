@@ -31,9 +31,11 @@ public class nfsa {
 	 */
 	private Set<Integer> transitions[][];
 	
+	private Set<Integer> nfsa[][];
+	
 	private Set<Integer> eclosure[];
 	
-	private Set<Integer> dfsa[][];
+	private ArrayList<Set[]> dfsa;
 	
 	/**
 	 * An array whose indices refer to a particular state in this machine.
@@ -46,6 +48,8 @@ public class nfsa {
 	 * An array that contains all valid characters of this machine.
 	 */
 	private char[] alphabet;
+	
+	private int alphabetSize;
 	
 	private boolean hasEmoves = false;
 	
@@ -88,18 +92,19 @@ public class nfsa {
 	 */
 	public void setAlpha(String line) {
 		String[] temp = line.split(" ");
-		alphabet = new char[temp.length+1]; // where the last index represents a column for emoves
-		for(int i = 0; i < alphabet.length-1; i++) { // for actual alphabet characters
-			alphabet[i] = temp[i].charAt(0); // copy actual alphabet values into alphabet array
+		alphabet = new char[temp.length+1]; // where the first index represents a column for emoves
+		alphabet[0] = 'e';
+		for(int i = 1; i < alphabet.length; i++) { // for actual alphabet characters
+			alphabet[i] = temp[i-1].charAt(0); // copy actual alphabet values into alphabet array
 		}
-		alphabet[alphabet.length-1] = 'e'; // make the last index a *, where * represents a possible emove
+		alphabetSize = alphabet.length-1;
 	}
 	
 	/**
 	 * A convenient way to print all valid characters of this machine.
 	 */
 	public void printAlpha() {
-		for(int i = 0; i < alphabet.length-1; i++) {
+		for(int i = 1; i < alphabet.length; i++) {
 			System.out.print(alphabet[i] + " ");
 		}
 		System.out.println();
@@ -117,33 +122,116 @@ public class nfsa {
 	
 	private void getEclosure() {
 		eclosure = new HashSet[numStates];
-		Set<Integer> tmp = new HashSet();
-		int lastElement = transitions.length-1;
 		int counter = 0;
-		for(int i = 0; i < getRows(transitions); i++) {
+		for(int i = 0; i < getRows(transitions)-1; i++) {
+			Set<Integer> tmp = new HashSet();
 			tmp.add(i);
-			printSet(transitions[i][lastElement]);
-			tmp.addAll(transitions[i][lastElement]);
+			if(transitions[i][0] != null) {
+				tmp.addAll(transitions[i][0]);
+			}
 			int setSize;
 			do {
 				setSize = tmp.size();
 				Set<Integer> tmp2 = new HashSet();
 				for(int s : tmp) {
-					tmp2.addAll(transitions[s][lastElement]);
+					if(transitions[s][0] != null) {
+						tmp2.addAll(transitions[s][0]);
+					}
 				}
 				tmp.addAll(tmp2);
 			} while(tmp.size() > setSize);
-			System.out.print("eclosure " + i + ": ");
 			eclosure[i] = tmp;
 		}
 	}	
 	
-	public void getNfsaNoEmove() {
-		if(hasEmoves == true) {
-			getEclosure();
+	public void setNfsaNoEmove() {
+		getEclosure();
+		nfsa = new HashSet[numStates][alphabetSize];	
+		
+		for(int i = 0; i < getRows(nfsa); i++) {
+			for(int j = 0; j < getCols(nfsa); j++) {
+				Set<Integer> eclosureAt_i = eclosure[i];
+				Set<Integer> toAdd = new HashSet();
+				int setSize;
+				for(int element : eclosureAt_i) {
+					if(transitions[element][j+1] != null) { 
+						toAdd.addAll(transitions[element][j+1]); 
+					}
+				}
+				Set<Integer> toAdd2 = new HashSet();
+				for(int element : toAdd) {
+					toAdd2.addAll(eclosure[element]);
+				}
+				toAdd.addAll(toAdd2);
+				nfsa[i][j] = toAdd;
+			}
+			
 		}
+		
 	}
 	
+	public int getDfsaNumStates() {
+		getDfsa();
+		return dfsa.size();
+	}
+	
+	private void getDfsa() {
+		if(hasEmoves == true) {
+			setNfsaNoEmove();
+		}
+		else {
+			nfsa = transitions;
+		}
+		
+		dfsa = new ArrayList<Set[]>();
+		ArrayList<Set> dfsaStatesList = new ArrayList<Set>();
+		
+		Set<Integer> tmpSet = new HashSet<Integer>();
+		Set<Integer>[] tmpArray = new HashSet[alphabetSize];
+		
+		tmpSet.add(0);
+		dfsaStatesList.add(tmpSet);
+		tmpArray = getFirstRow();
+		dfsa.add(tmpArray);
+		int counter = 1;
+		
+		for(Set<Integer> s : tmpArray) {
+			if( !dfsaStatesList.contains(s) ) {
+				dfsaStatesList.add(s);
+			}
+		}
+		do {
+			Set<Integer> dfsaSet = dfsaStatesList.get(counter);
+			Set<Integer>[] toAdd = new HashSet[alphabet.length-1];
+			for(int j = 0; j < alphabet.length-1; j++) {
+				Set<Integer> newSet = new HashSet();
+				for(int s : dfsaSet) {
+					if(nfsa[s][j] != null) {
+						newSet.addAll(nfsa[s][j]);
+					}
+				}
+				toAdd[j] = newSet;
+				if( !dfsaStatesList.contains(newSet) && newSet.size() > 0 ) {
+					dfsaStatesList.add(newSet);
+				}
+			}
+			dfsa.add(counter,toAdd);
+			counter += 1;
+		} while(counter < dfsaStatesList.size());	
+	}	
+	
+	private Set<Integer>[] getFirstRow() {
+		Set<Integer>[] tmpArray = new HashSet[alphabetSize];
+		if(hasEmoves == true) {
+			tmpArray = nfsa[0];
+		}
+		else {
+			for(int i = 0; i < tmpArray.length; i++) {
+				tmpArray[i] = nfsa[0][i+1];
+			}
+		}
+		return tmpArray;
+	}
 	
 	/*
 	public void getDFSA() {
@@ -177,8 +265,7 @@ public class nfsa {
 			}
 		}
 		
-	}
-	*/
+	} */
 	
 	/**
 	 * Sets the transition matrix of this machine, which tells the machine where
@@ -194,7 +281,7 @@ public class nfsa {
 			int p = Integer.parseInt(temp[0]); // the characters in the transition array can be characters
 			
 			int a = translate(temp[1].charAt(0));
-			if(a == alphabet.length-1) { hasEmoves = true; }
+			if(a == 0) { hasEmoves = true; }
 			Set<Integer> tmp = new HashSet<Integer>();
 			for(int j = 2; j < temp.length; j++) {
 				int q = Integer.parseInt(temp[j]);
@@ -221,6 +308,17 @@ public class nfsa {
 		}
 	}
 	
+	public void printDfsa() {
+		for(int i = 0; i < getRows(dfsa); i++) {
+			for(int j = 0; j < getCols(dfsa); j++) {
+				System.out.print("{ ");
+				printSet(dfsa.get(i)[j]);
+				System.out.print(" }");
+			}
+			System.out.println();
+		}
+	}
+	
 	/**
 	 * Translates a character of this machine's alphabet into a corresponding number
 	 * @param ch - the character to translate
@@ -241,6 +339,9 @@ public class nfsa {
 	private int getRows(Set[][] r) {
 		return r.length;
 	}
+	private int getRows(ArrayList<Set[]> r) {
+		return r.size();
+	}
 	
 	/**
 	 * Returns the number of columns in a 2d matrix
@@ -249,6 +350,9 @@ public class nfsa {
 	 */
 	private int getCols(Set[][] r) {
 		return r[0].length;
+	}
+	private int getCols(ArrayList<Set[]> r) {
+		return r.get(0).length;
 	}
 	
 	/**
